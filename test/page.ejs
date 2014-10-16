@@ -1,0 +1,41 @@
+<html>
+  <head>
+	<meta charset="<%=options.outputEncoding%>">
+  </head>
+    <body>
+	  <% if ( backLink ) { %>
+		 <a href="../index.html">Up</a>
+	  <% } %>
+	  <h1><%=label%></h1>
+	  <p><%=description%></p>
+	  <% if ( albums !== null && albums.length>0 ) { %>
+	  <h2>Albums</h2>
+	  <ul>
+		<% for(var i=0; i<albums.length; i++) {%>
+		   <li>
+			 <a href="<%= albums[i].name%>/index.html"><%- albums[i].label %></a>
+			 <p><%- albums[i].description%></p>
+			 <% if ( albums[i].author !== null && albums[i].author.length>0 ) { %>
+	           <p>Author : <%- albums[i].author%></p>
+			 <% } %>
+		   </li>
+		   <% } %>
+	  </ul>
+	  <% } %>
+	  <% if ( photos !== null && photos.length>0 ) { %>
+		<h2>Photos</h2>
+		<div>
+			 <% if ( author !== null && author.length>0 ) { %>
+	           <p>Author : <%- author%></p>
+			 <% } %>
+		<% for(var i=0; i<photos.length; i++) {%>
+		   <p>
+			 <img src="<%= photos[i].name %>" width="200px"/>
+			 <br/>
+			 <%- photos[i].description %>
+		   </p>
+		<% } %>
+		</div>
+		<% } %>
+	</body>
+</html>
