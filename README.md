@@ -80,7 +80,7 @@ grunt.initConfig({
 
 #### Data available in template file
 
-```json
+```js
 {
 	options: {...},
 	album: {
@@ -92,7 +92,7 @@ grunt.initConfig({
 			description: 'My first test'
 		},
 		albums: [{
-			path: 'folder 1_1', 
+			path: 'folder 1/folder 1_1', 
 			name: 'folder 1_1', 
 			metadata: {
 			    title: 'My first inner directory',
