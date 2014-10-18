@@ -55,6 +55,7 @@ module.exports = function(grunt) {
       generate: {
         options: {
 			photos: ['*.jpeg','*.jpg','*.png','*.gif'],
+			metadatafile: ['title.html','description.html','author.html','showInParent'],
 			inputEncoding: 'cp1252',
 			oututEncoding: 'utf-8'
         },

@@ -8,8 +8,6 @@
 
 'use strict';
 
-//var util = require('util');
-//var glob = require('glob');
 var fs = require('fs'); // file system
 var pth = require('path'); // path
 var ejs = require('ejs'); // template
@@ -24,6 +22,7 @@ module.exports = function(grunt) {
 		// Merge task-specific and/or target-specific options with these defaults.
 		var options = this.options({
 			photos: ['*.jpeg','*.jpg','*.png','*.gif'],
+			metadatafiles: ['title.html','description.html','author.html','showInParent'],
 			inputEncoding: 'utf-8',
 			outputEncoding: 'utf-8'
 		});
@@ -42,69 +41,120 @@ module.exports = function(grunt) {
 
 		var template = fs.readFileSync(makeAbsolutePath(templateFile)).toString();
 
-		var directories = grunt.file.expand({filter:'isDirectory'},this.data.src+'/**');
-		directories = directories.sort();
-		directories.forEach(function(localRoot) {
+		var gallery = {};
+		// load data
+		gallery = load(makeAbsolutePath(src),makeAbsolutePath(src),options);
+		// remove empty album
+		recursiveCompute(gallery);
+		// compute the nomber of photos in self and children
+		sumPhotos(gallery);
+		// make html content
+		write(makeAbsolutePath(dest),gallery,options,template);
+	});
 
-			var relative = pth.relative(src, localRoot);
-			var albums = [];
-			var photos = [];
+	/** 
+	 * Load data from source directory.
+	 * Recursive function.
+	 */
+	function load(path,cwdPath,options) {
+		var relative = pth.relative(cwdPath, path);
+		var isChild = relative.length > 0;
+		var data = {
+			path: relative, 
+			name: pth.basename(relative), 
+			metadata: {},
+			albums: [],
+			photos: []
+		};
 
-			var localDirectories = grunt.file.expand({filter:'isDirectory',cwd:localRoot},'*');
-			localDirectories = localDirectories.sort();
-			localDirectories.forEach(function(directory) {
-				// have photos ?
-				/*
-				  var havePhotos = grunt.file.expand({filter:'isFile',cwd:pth.join(localRoot,directory),nocase:true},options.photos)>0;
-				  if ( !havePhotos ) {
-				  return;
-				  }*/
-
-				// searching metadata
-				var title = getInfos2(pth.join(localRoot,directory),'title.html', pth.basename(directory), options.inputEncoding);
-				var description = getInfos2(pth.join(localRoot,directory),'description.html', '', options.inputEncoding);
-				var author = getInfos2(pth.join(localRoot,directory),'author.html', '', options.inputEncoding);
-				// add to the albums list
-				albums.push({name:directory,label:title, description:description, author: author});
-			});			
-
-			var localFiles = grunt.file.expand({filter:'isFile',cwd:localRoot,nocase:true},options.photos);
-			localFiles = localFiles.sort();
-			localFiles.forEach(function(file) {
-				// searching metadata
-				var description = getInfos2(pth.join(localRoot), file.replace(/.\w+$/ig,'.html'), '', options.inputEncoding);
-				// add
-				photos.push({name:file, description:description});
-			});			
-
-			var title = getInfos2(pth.join(localRoot),'title.html', pth.basename(localRoot), options.inputEncoding);
-			var description = getInfos2(pth.join(localRoot),'description.html', '', options.inputEncoding);
-			var author = getInfos2(pth.join(localRoot),'author.html', '', options.inputEncoding);
-			var backLink = relative.length>0;
-
-			// Create html page content
-			var html = ejs.render(
-				template, 
-				{
-					options:options,
-					label:title, 
-					author: author, 
-					description:description, 
-					backLink: backLink,
-					albums:albums, 
-					photos:photos
-				}
+		// get metadata
+		options.metadatafiles.forEach( function(filename) {
+			var dataname = filename.replace(/\.\w+$/i,'');
+			var file = grunt.file.expand({nocase:true,filter:'isFile',cwd:path},filename);
+			var value = file.reduce(
+				function(prevReduce, file){
+					return ((prevReduce === undefined) ? '' : prevReduce) + getInfos2(pth.join(path),file, '', options.inputEncoding);
+				}, 
+				undefined
 			);
-
-			// Create directory if needed
-			grunt.file.mkdir(pth.join(dest,relative));
-			var albumFilename = pth.join(dest,relative,'index.html');
-			grunt.log.writeln('File ' + albumFilename + ' created with '+albums.length+' album(s) and '+photos.length+' photo(s).');
-			//fs.writeFileSync(albumFilename,html,options.outputEncoding);
-			grunt.file.write(albumFilename, html, {encoding: options.outputEncoding});
+			if (value !== null && value !== undefined ) {
+				//Object.defineProperty(data.meta, dataname, {value:value});
+				data.metadata[String(dataname)] = value;
+			}
 		});
 
-	});
+		// get photos
+		var localFiles = grunt.file.expand({filter:'isFile',cwd:path,nocase:true},options.photos);
+		localFiles = localFiles.sort();
+		localFiles.forEach(function(file) {
+			// searching metadata
+			var description = getInfos2(pth.join(path), file.replace(/\.\w+$/ig,'.html'), '', options.inputEncoding);
+			// add
+			data.photos.push({name:file, description:description});
+		});
+
+		// get albums
+		var localDirectories = grunt.file.expand({filter:'isDirectory',cwd:path},'*');
+		localDirectories = localDirectories.sort();
+		localDirectories.forEach(function(directory) {
+			// add to the albums list
+			data.albums.push(load(pth.join(cwdPath,relative,directory),cwdPath,options));
+		});			
+
+		return data;
+	}
+
+	/** 
+	 * Remove empty album. 
+	 * Recursive function.
+	 */
+	function recursiveCompute(data) {
+		data.albums = data.albums.filter(function(album) {
+			return recursiveCompute(album);
+		});
+		if ( data.albums.length === 0 && data.photos.length === 0 ) {
+			grunt.log.writeln("Folder "+data.path+" empty");
+			return false;
+		}
+		return true;
+	}
+
+	/** 
+	 * Compute the number of photos in self and children.
+	 * Recursive function.
+	 */
+	function sumPhotos(data) {
+		var nbr = data.photos.length + data.albums.reduce(function(previousReduce, album){return previousReduce + sumPhotos(album);},0);
+		data.sumPhotos = nbr;
+		return nbr;
+	}
+
+	/** 
+	 * Create html content from template.
+	 * Recursive function.
+	 */
+	function write(cwdPath,data,options,template) {
+		var isChild = data.path.length>0;
+		// Create html page content
+		var html = ejs.render(
+			template, 
+			{
+				options:options,
+				album: data,
+				isChild: isChild
+			}
+		);
+		// Create directory if needed
+		grunt.file.mkdir(pth.join(cwdPath,data.path));
+		var albumFilename = pth.join(cwdPath,data.path,'index.html');
+		grunt.log.writeln('File ' + albumFilename + ' created with '+data.albums.length+' album(s) and '+data.photos.length+' photo(s).');
+		grunt.file.write(albumFilename, html, {encoding: options.outputEncoding});
+		data.albums.forEach(
+			function(album){
+				write(cwdPath,album,options,template);
+			}
+		);
+	}
 
 	/**
 	 * If path is absolute, keep it. If not, make if absolute form the working directory.

@@ -3,36 +3,60 @@
 	<meta charset="<%=options.outputEncoding%>">
   </head>
     <body>
-	  <% if ( backLink ) { %>
+	  <% if ( isChild ) { %>
 		 <a href="../index.html">Up</a>
 	  <% } %>
-	  <h1><%=label%></h1>
-	  <p><%=description%></p>
-	  <% if ( albums !== null && albums.length>0 ) { %>
+	  <h1><%=album.metadata.label || album.name %></h1>(<%=album.sumPhotos%> photo(s))
+	  <% if ( album.metadata.description !== undefined && album.metadata.description.length>0 ) { %>
+	  <p><%= album.metadata.description%></p>
+	  <% } %>
+	  <p>showInParent = <%=album.metadata.showInParent%></p>
+	  <% if ( album.albums !== null && album.albums.length>0 ) { %>
 	  <h2>Albums</h2>
 	  <ul>
-		<% for(var i=0; i<albums.length; i++) {%>
+		<% album.albums.filter(function(innerAlbum){return innerAlbum.showInParent === undefined;}).forEach(function (innerAlbum) { %>
 		   <li>
-			 <a href="<%= albums[i].name%>/index.html"><%- albums[i].label %></a>
-			 <p><%- albums[i].description%></p>
-			 <% if ( albums[i].author !== null && albums[i].author.length>0 ) { %>
-	           <p>Author : <%- albums[i].author%></p>
+			 <a href="<%= innerAlbum.name%>/index.html"><%- innerAlbum.metadata.label || innerAlbum.name%></a> (<%=innerAlbum.sumPhotos%> photo(s))
+			 <p><%- innerAlbum.metadata.description%></p>
+			 <% if ( innerAlbum.metadata.author !== undefined && innerAlbum.metadata.author.length>0 ) { %>
+	           <p>Author : <%- innerAlbum.metadata.author%></p>
 			 <% } %>
 		   </li>
-		   <% } %>
+		   <% }); %>
 	  </ul>
 	  <% } %>
-	  <% if ( photos !== null && photos.length>0 ) { %>
+
+	  <h2>Inner Albums</h2>
+	  <ul>
+		<% album.albums.filter(function(innerAlbum){return innerAlbum.metadata.showInParent !== undefined;}).forEach(function (innerAlbum) { %>
+		   <li>
+			 <h3><a href="<%= innerAlbum.name%>/index.html"><%- innerAlbum.metadata.label || innerAlbum.name %></a></h3> (<%=innerAlbum.sumPhotos%> photo(s))
+			 <p><%- innerAlbum.metadata.description%></p>
+			 <% if ( innerAlbum.metadata.author !== undefined && innerAlbum.metadata.author.length>0 ) { %>
+	           <p>Author : <%- innerAlbum.metadata.author%></p>
+			 <% } %>
+		<% for(var i=0; i<innerAlbum.photos.length; i++) {%>
+		   <p>
+			 <img src="<%=innerAlbum.name%>/<%= innerAlbum.photos[i].name %>" width="200px"/>
+			 <br/>
+			 <%- innerAlbum.photos[i].description %>
+		   </p>
+		<% } %>
+		   </li>
+		<% }); %>
+	  </ul>
+
+	  <% if ( album.photos !== null && album.photos.length>0 ) { %>
 		<h2>Photos</h2>
 		<div>
-			 <% if ( author !== null && author.length>0 ) { %>
-	           <p>Author : <%- author%></p>
+			 <% if ( album.metadata.author !== undefined && album.metadata.author.length>0 ) { %>
+	           <p>Author : <%- album.metadata.author%></p>
 			 <% } %>
-		<% for(var i=0; i<photos.length; i++) {%>
+		<% for(var i=0; i<album.photos.length; i++) {%>
 		   <p>
-			 <img src="<%= photos[i].name %>" width="200px"/>
+			 <img src="<%= album.photos[i].name %>" width="200px"/>
 			 <br/>
-			 <%- photos[i].description %>
+			 <%- album.photos[i].description %>
 		   </p>
 		<% } %>
 		</div>
