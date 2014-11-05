@@ -1,0 +1,66 @@
+<html>
+    <head>
+        <meta charset="<%=options.outputEncoding%>">
+    </head>
+    <body>
+	  <!-- Breadcrumbs -->
+	  <% if ( album.parents.length === 0 ) { %>
+	    root &gt; 
+	  <% } %>
+	  <% album.parents.forEach(function(album, index, parents) { %>
+	     <a href="<%for(var i=index;i< parents.length ;i++) {%>../<%}%>index.html">
+		    <%= album.metadata.title || album.name || 'root' %>
+         </a> &gt; 
+	  <% }); %>
+
+	  <!-- Title -->
+	  <h1><%=album.metadata.title || album.name %></h1>
+	  <!-- Description -->
+	  <% if ( album.metadata.description ) { %>
+	      <p><%= album.metadata.description%></p>
+	  <% } %>
+	  There is <%=album.sumPhotos%> photo(s) in this part.
+
+	  <!-- Album -->
+	  <% if ( album.albums && album.albums.length > 0 ) { %>
+	      <h2>Albums</h2>
+		  <ul>
+		     <% album.albums.filter(function(innerAlbum){return innerAlbum.showInParent === undefined;}).forEach(function (innerAlbum) { %>
+			     <li>
+				     <a href="<%= innerAlbum.name%>/index.html"><%- innerAlbum.metadata.label || innerAlbum.name%></a> (<%=innerAlbum.sumPhotos%> photo(s))
+					 <p><%- innerAlbum.metadata.description%></p>
+					 <% if ( innerAlbum.metadata.author ) { %>
+					     <p>Author : <%- innerAlbum.metadata.author%></p>
+					 <% } %>
+				 </li>
+			 <% }); %>
+	      </ul>
+	  <% } %>
+
+	  <!-- Photos -->
+	  <% if ( album.photos && album.photos.length > 0 ) { %>
+		  <h2>Photos</h2>
+		  <div>
+		 	 <% if ( album.metadata.author ) { %>
+	             <p>Author : <%- album.metadata.author%></p>
+			 <% } %>
+		     <% album.photos.forEach(function(photo) {%>
+		         <p>
+			        <img src="<%= photo.name %>" width="200px"/>
+			        <br/>
+					<%- photo.description %><br>
+					<% if (photo.exif) { %>
+					    DateTimeOriginal : <%- photo.exif.DateTimeOriginal %><script>document.write(new Date(<%=photo.exif.DateTimeOriginal*1000.0%>).toLocaleDateString('fr-FR',{weekday: "long", year: "numeric", month: "long", day: "numeric"}));</script><br>
+					    ImageDescription : <%- photo.exif.ImageDescription %><br>
+					    Copyright : <%- photo.exif.Copyright %><br>
+					    Artist : <%- photo.exif.Artist %><br>
+    					XPTitle : <%- photo.exif.XPTitle %><br>
+	    				XPAuthor : <%- photo.exif.XPAuthor %><br>
+		    			XPComment : <%- photo.exif.XPComment %><br>
+					<% } %>
+				 </p>
+			 <% }); %>
+		  </div>
+      <% } %>
+	</body>
+</html>

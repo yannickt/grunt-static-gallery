@@ -32,44 +32,74 @@ module.exports = function(grunt) {
     },
 
     copy: {
-      main: {
-        files: [ {expand: true, nocase:true, cwd: 'test/medias', src: ['**/*.jpeg','**/*.jpg','**/*.png','**/*.gif'], dest: 'tmp/'}]
+      test: {
+        files: [ {expand: true, nocase:true, cwd: 'test/medias', src: ['**/*.jpeg','**/*.jpg','**/*.png','**/*.gif'], dest: 'tmp/test'}]
+      },
+      example: {
+        files: [ {expand: true, nocase:true, cwd: 'test/medias', src: ['**/*.jpeg','**/*.jpg','**/*.png','**/*.gif'], dest: 'tmp/example'}]
       }
     },
-
-	/* 
-    image_resize: {
-		resize: {
-			options: {
-				width: '150px',
-				height: '150px',
-				quality: 0.9
-			},
-			src: 'test/medias/*.*',
-			dest: 'tmp/'
-		}
-	},*/
 
 	// Configuration to be run (and then tested).
     static_gallery: {
-      generate: {
+      test: {
         options: {
 			photos: ['*.jpeg','*.jpg','*.png','*.gif'],
-			metadatafile: ['title.html','description.html','author.html','showInParent'],
+			metadatafiles: ['title.html','description.html','author.html'],
 			inputEncoding: 'cp1252',
-			oututEncoding: 'utf-8'
+			oututEncoding: 'utf-8',
+			file: 'index.html',
+			debug: true
         },
         src: 'test/medias',
-        dest: 'tmp',
-        template: 'test/page.ejs'
+        dest: 'tmp/test',
+        template: 'test/test.ejs'
+      },
+      example: {
+        options: {
+			photos: ['*.jpeg','*.jpg','*.png','*.gif'],
+			metadatafiles: ['title.html','description.html','author.html'],
+			inputEncoding: 'cp1252',
+			oututEncoding: 'utf-8',
+			file: 'index.html',
+			debug: true
+        },
+        src: 'test/medias',
+        dest: 'tmp/example',
+        template: 'test/example.ejs'
       }
     },
+
+	image_resize: {
+		example: {
+			options: {
+				width: 300,
+				height: 300,
+				overwrite: true,
+				quality: 0.2
+			},
+			files : [ {
+				// Enable dynamic expansion
+				expand : true,
+				nocase : true,
+				// Src matches are relative to this path
+				cwd : 'test/medias', 
+				// Actual patterns to match
+				src : [ '**/*.{png,jpg,jpeg,gif}'], 
+				// Destination path prefix
+				dest : 'tmp/example/thumbnails'
+			} ]
+		}
+	},
 
     // Unit tests.
     nodeunit: {
       tests: ['test/*_test.js']
-    }
+    },
 
+    esformatter: {
+      src: 'src/**/*.js'
+    }
   });
 
   // Actually load this plugin's task(s).
@@ -80,11 +110,14 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-nodeunit');
-  //grunt.loadNpmTasks('grunt-image-resize');
+  grunt.loadNpmTasks('grunt-esformatter');
+  grunt.loadNpmTasks('grunt-image-resize');
 
   // Whenever the "test" task is run, first clean the "tmp" dir, then run this
   // plugin's task(s), then test the result.
-  grunt.registerTask('test', ['clean', 'static_gallery', 'copy', /*'image_resize',*/ 'nodeunit']);
+  grunt.registerTask('test', ['clean', 'static_gallery::test', 'copy::test', 'nodeunit']);
+
+  grunt.registerTask('example', ['clean', 'static_gallery::example', 'copy::example', 'image_resize::example']);
 
   // By default, lint and run all tests.
   grunt.registerTask('default', ['jshint', 'test']);

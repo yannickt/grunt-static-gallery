@@ -1,0 +1,90 @@
+<html>
+    <head>
+        <meta charset="<%=options.outputEncoding%>">
+
+		<!-- bootstrap -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap-theme.min.css">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+    </head>
+    <body>
+	  <div class="container-fluid">
+	  <!-- Breadcrumbs -->
+	  <ol class="breadcrumb">
+	  <% if ( album.parents.length === 0 ) { %>
+	      <li><a href="#">Home</a></li>
+	  <% } %>
+	  <% album.parents.forEach(function(album, index, parents) { %>
+	     <li><a href="<%for(var i=index;i< parents.length ;i++) {%>../<%}%>index.html"><%= album.metadata.title || album.name || 'root' %></a></li>
+	  <% }); %>
+	  </ol>
+
+	  <!-- Title -->
+	  <h1><%=album.metadata.title || album.name %></h1>
+	  <!-- Description -->
+	  <% if ( album.metadata.description ) { %>
+	      <p><%= album.metadata.description%></p>
+	  <% } %>
+	  There is <%=album.sumPhotos%> photo(s) in this part.
+
+	  <!-- Album -->
+	  <% if ( album.albums && album.albums.length > 0 ) { %>
+	      <h2>Albums</h2>
+		  <ul>
+		     <% album.albums.forEach(function (album) { %>
+			     <li>
+				     <a href="<%= album.name%>/index.html"><%- album.metadata.title || album.name%></a> (<%=album.sumPhotos%> photo(s))
+					 <p><%- album.metadata.description%></p>
+					 <% if ( album.metadata.author ) { %>
+					     <p>Author : <%- album.metadata.author%></p>
+					 <% } %>
+				 </li>
+			 <% }); %>
+	      </ul>
+	  <% } %>
+
+	  <!-- Photos -->
+	  <% if ( album.photos && album.photos.length > 0 ) { %>
+		  <h2>Photos</h2>
+		  <div class="row">
+		 	 <% if ( album.metadata.author ) { %>
+	             <p>Author : <%- album.metadata.author%></p>
+			 <% } %>
+		  </div>
+		  <div class="row">
+		     <% album.photos.forEach(function(photo) {%>
+			 <div class="col-xs-6 col-md-3">
+		         <div class="thumbnail">
+				     <a href="<%= photo.name %>">
+			             <img src="<%for(var i=0;i<album.parents.length ;i++) {%>../<%}%>thumbnails/<%= album.path %>/<%= photo.name %>" >
+					 </a>
+			        <div class="caption">
+					  <% if (photo.exif && photo.exif.DateTimeOriginal ) { %>
+					    <span style="font-size: smaller;">
+					    <script>document.write(new Date(<%=photo.exif.DateTimeOriginal*1000.0%>).toLocaleDateString('fr-FR',{weekday: "long", year: "numeric", month: "long", day: "numeric", hour:"2-digit", minute:"2-digit", second:"2-digit"}));</script><br>
+						</span>
+					  <% } %>
+					  <% if ( photo.exif && photo.exif.ImageDescription || photo.exif && photo.exif.XPTitle ) { %>
+					      <h4><%- photo.exif.ImageDescription || photo.exif.XPTitle %></h4>
+					  <% } %>
+					  <% if ( photo.description || photo.exif && photo.exif.UserComment || photo.exif && photo.exif.XPComment) { %>
+					      <p>
+						      <%- photo.description || (photo.exif) ? ( photo.exif.UserComment || photo.exif.XPComment ) : '' %><br>
+					      </p>
+					  <% } %>
+					  <% if ( photo.exif && photo.exif.Artist || photo.exif && photo.exif.XPComment ) { %>
+					      <p>
+					         By <%- photo.exif.Artist || photo.exif.XPAuthor | '' %>
+					      </p>
+ 					   <% } %>
+  					</div>
+				 </div>
+			 </div>
+			 <% }); %>
+		  </div>
+      <% } %>
+	  </div>
+	</body>
+</html>
